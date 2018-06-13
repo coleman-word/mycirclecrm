@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Foundation\Auth\ResetsPasswords;
+use Bestmomo\LaravelEmailConfirmation\Traits\ResetsPasswords;
 
 class ResetPasswordController extends Controller
 {
@@ -19,6 +19,8 @@ class ResetPasswordController extends Controller
     */
 
     use ResetsPasswords;
+
+    protected $redirectTo = '/dashboard';
 
     /**
      * Create a new controller instance.

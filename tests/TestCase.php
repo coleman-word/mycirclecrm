@@ -1,25 +1,27 @@
 <?php
 
-abstract class TestCase extends Illuminate\Foundation\Testing\TestCase
+namespace Tests;
+
+use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
+
+abstract class TestCase extends BaseTestCase
 {
-    /**
-     * The base URL to use while testing the application.
-     *
-     * @var string
-     */
-    protected $baseUrl = 'http://localhost';
+    use CreatesApplication;
 
     /**
-     * Creates the application.
+     * Call protected/private method of a class.
      *
-     * @return \Illuminate\Foundation\Application
+     * @param  object &$object
+     * @param  string $methodName
+     * @param  array  $parameters
+     * @return mixed
      */
-    public function createApplication()
+    public function invokePrivateMethod(&$object, $methodName, array $parameters = [])
     {
-        $app = require __DIR__.'/../bootstrap/app.php';
+        $reflection = new \ReflectionClass(get_class($object));
+        $method = $reflection->getMethod($methodName);
+        $method->setAccessible(true);
 
-        $app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
-
-        return $app;
+        return $method->invokeArgs($object, $parameters);
     }
 }

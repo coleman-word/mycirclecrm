@@ -1,6 +1,6 @@
 <?php
 
-return [
+$db = [
 
     /*
     |--------------------------------------------------------------------------
@@ -13,7 +13,7 @@ return [
     |
     */
 
-    'fetch' => PDO::FETCH_OBJ,
+    'fetch' => PDO::FETCH_CLASS,
 
     /*
     |--------------------------------------------------------------------------
@@ -27,6 +27,20 @@ return [
     */
 
     'default' => env('DB_CONNECTION', 'mysql'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Use utf8mb4 charset format
+    |--------------------------------------------------------------------------
+    |
+    | Use the new utf8mb4 charset format
+    | ⚠ be sure your DBMS supports utf8mb4 format
+    | See https://dev.mysql.com/doc/refman/5.5/en/charset-unicode-utf8mb4.html
+    | MySQL > 5.7.7 fully support it.
+    |
+    */
+
+    'use_utf8mb4' => env('DB_USE_UTF8MB4', true),
 
     /*
     |--------------------------------------------------------------------------
@@ -49,21 +63,35 @@ return [
         'sqlite' => [
             'driver' => 'sqlite',
             'database' => env('DB_DATABASE', database_path('database.sqlite')),
-            'prefix' => '',
+            'prefix' => env('DB_PREFIX', ''),
         ],
 
         'mysql' => [
             'driver' => 'mysql',
             'host' => env('DB_HOST', 'localhost'),
             'port' => env('DB_PORT', '3306'),
+            'unix_socket' => env('DB_UNIX_SOCKET', ''),
             'database' => env('DB_DATABASE', 'forge'),
             'username' => env('DB_USERNAME', 'forge'),
             'password' => env('DB_PASSWORD', ''),
-            'charset' => 'utf8',
-            'collation' => 'utf8_unicode_ci',
-            'prefix' => '',
-            'strict' => true,
+            'charset' => env('DB_USE_UTF8MB4', true) ? 'utf8mb4' : 'utf8',
+            'collation' => env('DB_USE_UTF8MB4', true) ? 'utf8mb4_unicode_ci' : 'utf8_unicode_ci',
+            'prefix' => env('DB_PREFIX', ''),
+            'strict' => false,
             'engine' => null,
+        ],
+
+        'testing' => [
+            'driver' => 'mysql',
+            'host' => env('DB_TEST_HOST'),
+            'unix_socket' => env('DB_TEST_UNIX_SOCKET', ''),
+            'database' => env('DB_TEST_DATABASE'),
+            'username' => env('DB_TEST_USERNAME'),
+            'password' => env('DB_TEST_PASSWORD'),
+            'charset' => env('DB_USE_UTF8MB4', true) ? 'utf8mb4' : 'utf8',
+            'collation' => env('DB_USE_UTF8MB4', true) ? 'utf8mb4_unicode_ci' : 'utf8_unicode_ci',
+            'prefix' => '',
+            'strict' => false,
         ],
 
         'pgsql' => [
@@ -73,10 +101,21 @@ return [
             'database' => env('DB_DATABASE', 'forge'),
             'username' => env('DB_USERNAME', 'forge'),
             'password' => env('DB_PASSWORD', ''),
+            'prefix' => env('DB_PREFIX', ''),
+            'charset' => 'utf8',
+            'schema' => 'public',
+        ],
+
+        'pgsqltesting' => [
+            'driver' => 'pgsql',
+            'host' => env('DB_TEST_HOST'),
+            'port' => env('DB_PORT', '5432'),
+            'database' => env('DB_TEST_DATABASE'),
+            'username' => env('DB_TEST_USERNAME'),
+            'password' => env('DB_TEST_PASSWORD'),
             'charset' => 'utf8',
             'prefix' => '',
             'schema' => 'public',
-            'sslmode' => 'prefer',
         ],
 
     ],
@@ -119,3 +158,30 @@ return [
     ],
 
 ];
+
+/*
+ * If the instance is hosted on Heroku, then the database information
+ * needs to be parsed from the environment variable provided by Heroku.
+ * This is done below, added to the $db variable and then returned.
+ */
+if (env('HEROKU')) {
+    $url = parse_url(env('CLEARDB_DATABASE_URL'));
+
+    $db['connections']['heroku'] = [
+        'driver' => 'mysql',
+        'host' => $url['host'],
+        'database' => starts_with($url['path'], '/') ? str_after($url['path'], '/') : $url['path'],
+        'username' => $url['user'],
+        'password' => $url['pass'],
+        'charset' => env('DB_USE_UTF8MB4', true) ? 'utf8mb4' : 'utf8',
+        'collation' => env('DB_USE_UTF8MB4', true) ? 'utf8mb4_unicode_ci' : 'utf8_unicode_ci',
+        'prefix' => env('DB_PREFIX', ''),
+        'strict' => false,
+        'schema' => 'public',
+    ];
+    if (array_key_exists('port', $url)) {
+        $db['connections']['heroku']['port'] = $url['port'];
+    }
+}
+
+return $db;
